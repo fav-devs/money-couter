@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Canadian Money Counter</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #eef2ff, #f8fafc, #ecfeff);
+      color: #0f172a;
+      padding: 24px;
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      letter-spacing: -0.05em;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: #475569;
+      font-size: 1rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 850px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+      backdrop-filter: blur(18px);
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .money-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 90px 1fr 120px;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    @media (max-width: 580px) {
+      .row {
+        grid-template-columns: 78px 1fr;
+      }
+      .row-total {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .denom {
+      font-weight: 800;
+      font-size: 1.05rem;
+    }
+
+    .bill {
+      color: #1d4ed8;
+    }
+
+    .coin {
+      color: #a16207;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      outline: none;
+      background: white;
+    }
+
+    input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
+    }
+
+    .row-total {
+      text-align: right;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .summary {
+      display: grid;
+      gap: 12px;
+    }
+
+    .stat {
+      padding: 16px;
+      border-radius: 18px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .label {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      font-weight: 800;
+    }
+
+    .value {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      margin-top: 4px;
+    }
+
+    .target-box {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      background: #111827;
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      background: #020617;
+    }
+
+    .ghost {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .ghost:hover {
+      background: #cbd5e1;
+    }
+
+    .result {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #ecfdf5;
+      border: 1px solid #bbf7d0;
+      color: #064e3b;
+    }
+
+    .warning {
+      background: #fff7ed;
+      border-color: #fed7aa;
+      color: #7c2d12;
+    }
+
+    .remove-list,
+    .remain-list {
+      margin: 10px 0 0;
+      padding-left: 18px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .small {
+      color: #64748b;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .pill {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #e0e7ff;
+      color: #3730a3;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <span class="pill">CAD Cash Tray Tool</span>
+      <h1>Canadian Money Counter</h1>
+      <p class="subtitle">Count bills and coins, then split the tray so a target amount stays behind with as much useful change as possible.</p>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <div class="section-title">
+          <h2>Enter quantity of each denomination</h2>
+          <button class="ghost" onclick="clearAll()">Clear</button>
+        </div>
+        <div id="moneyList" class="money-list"></div>
+      </div>
+
+      <aside class="card">
+        <div class="section-title">
+          <h2>Summary</h2>
+        </div>
+
+        <div class="summary">
+          <div class="stat">
+            <div class="label">Total Cash</div>
+            <div id="totalCash" class="value">$0.00</div>
+          </div>
+
+          <div class="stat">
+            <div class="label">Amount to keep in tray</div>
+            <div class="target-box">
+              <input id="targetAmount" type="number" min="0" step="0.05" value="200" oninput="calculate()" />
+              <button onclick="calculate()">Split</button>
+            </div>
+            <p class="small">Example: enter 200 if you want exactly $200 left in the tray.</p>
+          </div>
+
+          <div class="stat">
+            <div class="label">Keep smaller money preference</div>
+            <input id="changePreference" type="range" min="0" max="100" value="85" oninput="updatePreferenceLabel(); calculate();" />
+            <div class="small"><strong id="preferenceLabel">85%</strong> — higher means the tray keeps more coins, $5s, $10s, and $20s when possible.</div>
+          </div>
+
+          <div id="splitResult" class="result warning">
+            Enter your cash counts to see what to remove.
+          </div>
+        </div>
+
+        <div class="actions">
+          <button onclick="fillSample()">Sample $200+ Tray</button>
+          <button class="ghost" onclick="copyResult()">Copy Result</button>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const denominations = [
+      { label: '$100 bill', value: 100, type: 'bill' },
+      { label: '$50 bill', value: 50, type: 'bill' },
+      { label: '$20 bill', value: 20, type: 'bill' },
+      { label: '$10 bill', value: 10, type: 'bill' },
+      { label: '$5 bill', value: 5, type: 'bill' },
+      { label: '$2 toonie', value: 2, type: 'coin' },
+      { label: '$1 loonie', value: 1, type: 'coin' },
+      { label: '25¢ quarter', value: 0.25, type: 'coin' },
+      { label: '10¢ dime', value: 0.10, type: 'coin' },
+      { label: '5¢ nickel', value: 0.05, type: 'coin' }
+    ];
+
+    const moneyList = document.getElementById('moneyList');
+    const totalCashEl = document.getElementById('totalCash');
+    const splitResult = document.getElementById('splitResult');
+
+    function cents(value) {
+      return Math.round(value * 100);
+    }
+
+    function money(valueInCents) {
+      return (valueInCents / 100).toLocaleString('en-CA', {
+        style: 'currency',
+        currency: 'CAD'
+      });
+    }
+
+    function renderInputs() {
+      moneyList.innerHTML = '';
+      denominations.forEach((d, index) => {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.innerHTML = `
+          <div class="denom ${d.type}">${d.label}</div>
+          <input id="denom-${index}" type="number" min="0" step="1" value="0" inputmode="numeric" oninput="calculate()" />
+          <div id="row-total-${index}" class="row-total">$0.00</div>
+        `;
+        moneyList.appendChild(row);
+      });
+    }
+
+    function getCounts() {
+      return denominations.map((d, index) => {
+        const input = document.getElementById(`denom-${index}`);
+        const count = Math.max(0, parseInt(input.value || '0', 10));
+        return {
+          ...d,
+          index,
+          count,
+          valueCents: cents(d.value),
+          totalCents: count * cents(d.value)
+        };
+      });
+    }
+
+    function calculate() {
+      const items = getCounts();
+      let totalCents = 0;
+
+      items.forEach(item => {
+        totalCents += item.totalCents;
+        document.getElementById(`row-total-${item.index}`).textContent = money(item.totalCents);
+      });
+
+      totalCashEl.textContent = money(totalCents);
+
+      const targetCents = cents(parseFloat(document.getElementById('targetAmount').value || '0'));
+      const preference = parseInt(document.getElementById('changePreference').value || '85', 10);
+
+      if (totalCents === 0) {
+        splitResult.className = 'result warning';
+        splitResult.innerHTML = 'Enter your cash counts to see what to remove.';
+        return;
+      }
+
+      if (targetCents <= 0) {
+        splitResult.className = 'result warning';
+        splitResult.innerHTML = 'Enter a target amount greater than $0.';
+        return;
+      }
+
+      if (totalCents < targetCents) {
+        splitResult.className = 'result warning';
+        splitResult.innerHTML = `You only have <strong>${money(totalCents)}</strong>, so you cannot leave <strong>${money(targetCents)}</strong> in the tray.`;
+        return;
+      }
+
+      const removeCents = totalCents - targetCents;
+      const removal = chooseRemoval(items, removeCents, preference);
+
+      if (!removal) {
+        splitResult.className = 'result warning';
+        splitResult.innerHTML = `Could not make exactly <strong>${money(targetCents)}</strong> with the current denominations. Try changing the target by $0.05 or recounting coins.`;
+        return;
+      }
+
+      const remaining = items.map((item, i) => ({
+        ...item,
+        count: item.count - removal.counts[i]
+      }));
+
+      splitResult.className = 'result';
+      splitResult.innerHTML = `
+        <strong>Remove ${money(removeCents)} total.</strong><br />
+        This leaves exactly <strong>${money(targetCents)}</strong> in the tray, prioritizing smaller bills and coins based on your preference slider.
+        <h3>Remove:</h3>
+        <ul class="remove-list">${formatList(items, removal.counts)}</ul>
+        <h3>Tray will keep:</h3>
+        <ul class="remain-list">${formatRemainingList(remaining)}</ul>
+      `;
+    }
+
+    // Finds an exact removal amount while scoring different removal options.
+    // Higher preference means the app tries harder to keep smaller bills and coins in the tray.
+    function chooseRemoval(items, targetRemoveCents, preference = 85) {
+      const counts = items.map(item => item.count);
+      const values = items.map(item => item.valueCents);
+      const maxSmallValue = 2000; // $20 and below are treated as useful tray change.
+      const preferenceWeight = Math.max(0, Math.min(100, preference)) / 100;
+
+      const dp = new Map();
+      dp.set(0, { score: 0, counts: Array(items.length).fill(0) });
+
+      items.forEach((item, index) => {
+        const existingStates = Array.from(dp.entries());
+
+        for (const [sum, state] of existingStates) {
+          for (let qty = 1; qty <= item.count; qty++) {
+            const next = sum + qty * item.valueCents;
+            if (next > targetRemoveCents) break;
+
+            const candidateCounts = [...state.counts];
+            candidateCounts[index] += qty;
+
+            const isSmallMoney = item.valueCents <= maxSmallValue;
+            const removePenalty = isSmallMoney
+              ? qty * item.valueCents * (1 + preferenceWeight * 8)
+              : qty * item.valueCents * (1 - preferenceWeight * 0.35);
+
+            // Small tie-breaker: remove fewer physical pieces when scores are close.
+            const piecePenalty = qty * 3;
+            const candidateScore = state.score + removePenalty + piecePenalty;
+
+            const old = dp.get(next);
+            if (!old || candidateScore < old.score) {
+              dp.set(next, { score: candidateScore, counts: candidateCounts });
+            }
+          }
+        }
+      });
+
+      return dp.has(targetRemoveCents) ? { counts: dp.get(targetRemoveCents).counts } : null;
+    }
+
+    function updatePreferenceLabel() {
+      const value = document.getElementById('changePreference').value;
+      document.getElementById('preferenceLabel').textContent = `${value}%`;
+    }
+
+    function formatList(items, counts) {
+      const rows = items
+        .map((item, i) => ({ item, count: counts[i] }))
+        .filter(row => row.count > 0)
+        .map(row => `<li>${row.count} × ${row.item.label} = <strong>${money(row.count * row.item.valueCents)}</strong></li>`);
+
+      return rows.length ? rows.join('') : '<li>Nothing to remove.</li>';
+    }
+
+    function formatRemainingList(items) {
+      const rows = items
+        .filter(item => item.count > 0)
+        .map(item => `<li>${item.count} × ${item.label} = <strong>${money(item.count * item.valueCents)}</strong></li>`);
+
+      return rows.length ? rows.join('') : '<li>No cash remains.</li>';
+    }
+
+    function clearAll() {
+      denominations.forEach((_, index) => {
+        document.getElementById(`denom-${index}`).value = 0;
+      });
+      calculate();
+    }
+
+    function fillSample() {
+      const sample = [1, 2, 6, 5, 8, 15, 20, 30, 20, 15];
+      sample.forEach((value, index) => {
+        document.getElementById(`denom-${index}`).value = value;
+      });
+      calculate();
+    }
+
+    async function copyResult() {
+      const text = splitResult.innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+        alert('Result copied.');
+      } catch {
+        alert('Could not copy result.');
+      }
+    }
+
+    renderInputs();
+    updatePreferenceLabel();
+    calculate();
+  </script>
+</body>
+</html>
